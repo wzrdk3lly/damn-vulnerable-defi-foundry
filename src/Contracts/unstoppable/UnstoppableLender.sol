@@ -21,13 +21,13 @@ contract UnstoppableLender is ReentrancyGuard {
 
     constructor(address tokenAddress) {
         if (tokenAddress == address(0)) revert TokenAddressCannotBeZero();
-        damnValuableToken = IERC20(tokenAddress);
+        damnValuableToken = IERC20(tokenAddress); 
     }
 
     function depositTokens(uint256 amount) external nonReentrant {
-        if (amount == 0) revert MustDepositOneTokenMinimum();
+        if (amount == 0) revert MustDepositOneTokenMinimum(); //@audit to setup the challenge 1million tokens will be deposited 
         // Transfer token from sender. Sender must have first approved them.
-        damnValuableToken.transferFrom(msg.sender, address(this), amount);
+        damnValuableToken.transferFrom(msg.sender, address(this), amount); // what if in my hack contract, my contract deposits the 1millio into vault using deposit  
         poolBalance = poolBalance + amount;
     }
 
@@ -38,14 +38,14 @@ contract UnstoppableLender is ReentrancyGuard {
         if (balanceBefore < borrowAmount) revert NotEnoughTokensInPool();
 
         // Ensured by the protocol via the `depositTokens` function
-        if (poolBalance != balanceBefore) revert AssertionViolated();
+        if (poolBalance != balanceBefore) revert AssertionViolated(); //@audit this assertion can cause issues hehehe :)
 
         damnValuableToken.transfer(msg.sender, borrowAmount);
 
         IReceiver(msg.sender).receiveTokens(address(damnValuableToken), borrowAmount);
 
         uint256 balanceAfter = damnValuableToken.balanceOf(address(this));
-        if (balanceAfter < balanceBefore) revert FlashLoanHasNotBeenPaidBack();
+        if (balanceAfter < balanceBefore) revert FlashLoanHasNotBeenPaidBack(); // hmmm I have to pay it back?
     }
 }
 

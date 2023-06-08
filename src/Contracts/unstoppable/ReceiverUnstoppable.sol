@@ -25,12 +25,20 @@ contract ReceiverUnstoppable {
 
     /// @dev Pool will call this function during the flash loan
     function receiveTokens(address tokenAddress, uint256 amount) external {
-        if (msg.sender != address(pool)) revert SenderMustBePool();
-        IERC20(tokenAddress).safeTransfer(msg.sender, amount);
+        if (msg.sender != address(pool)) revert SenderMustBePool(); 
+        IERC20(tokenAddress).safeTransfer(msg.sender, amount); 
     }
 
     function executeFlashLoan(uint256 amount) external {
-        if (msg.sender != owner) revert OnlyOwnerCanExecuteFlashLoan();
+        if (msg.sender != owner) revert OnlyOwnerCanExecuteFlashLoan(); 
         pool.flashLoan(amount);
     }
 }
+
+/**
+ * Thoughts on approach:
+ * - there's a millio DVT tokens and they are offering for free for a threhold. 
+ * Since there is no price, we can just drain the vault to dtop offering flash loans 
+ * we can also DOS by mabye extending the array a bit?
+ * OBJECTIVE: DOS the ability for the vault to perform anymore flashloans
+ */

@@ -24,7 +24,7 @@ contract NaiveReceiverLenderPool is ReentrancyGuard {
     function flashLoan(address borrower, uint256 borrowAmount) external nonReentrant {
         uint256 balanceBefore = address(this).balance;
         if (balanceBefore < borrowAmount) revert NotEnoughETHInPool();
-        if (!borrower.isContract()) revert BorrowerMustBeADeployedContract();
+        if (!borrower.isContract()) revert BorrowerMustBeADeployedContract(); // what happens if I deploy my own contract
 
         // Transfer ETH and handle control to receiver
         borrower.functionCallWithValue(abi.encodeWithSignature("receiveEther(uint256)", FIXED_FEE), borrowAmount);

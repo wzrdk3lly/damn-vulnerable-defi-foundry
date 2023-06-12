@@ -67,6 +67,8 @@ contract NaiveReceiver is Test {
         vm.startPrank(attacker);
 
         naiveReceiverAttack.attack();
+        address owner = naiveReceiverAttack.owner();
+        console.log("owner is", owner);
 
         vm.stopPrank();
         /**

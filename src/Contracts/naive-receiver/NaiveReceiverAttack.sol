@@ -10,9 +10,13 @@ contract NaiveRecieverAttack{
 
     address public naiveReceiverLenderPool;
     address public flashLoanReceiver;
+
+    address public owner;
     constructor(address _naiveReceiverLenderPool, address _flashLoanReceiver) {
          naiveReceiverLenderPool = _naiveReceiverLenderPool;
          flashLoanReceiver =  _flashLoanReceiver;
+         owner = msg.sender;
+
     }
 
     function attack() external {

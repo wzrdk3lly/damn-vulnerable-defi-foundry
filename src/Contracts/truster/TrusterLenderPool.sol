@@ -29,8 +29,8 @@ contract TrusterLenderPool is ReentrancyGuard {
         if (balanceBefore < borrowAmount) revert NotEnoughTokensInPool();
 
         damnValuableToken.transfer(borrower, borrowAmount);
-        target.functionCall(data);
-
+        target.functionCall(data); //@audit there is no validation of target. I can pass in the target as dvt or this contract and have it transfer me the money
+        // @audit - POC: create calldata for approve function and pass in a total of 1million dvt for my attacker address. after this, transfer the tokens whenever I want.
         uint256 balanceAfter = damnValuableToken.balanceOf(address(this));
         if (balanceAfter < balanceBefore) revert FlashLoanHasNotBeenPaidBack();
     }

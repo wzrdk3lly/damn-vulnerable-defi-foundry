@@ -20,20 +20,20 @@ contract SideEntranceLenderPool {
     error FlashLoanHasNotBeenPaidBack();
 
     function deposit() external payable {
-        balances[msg.sender] += msg.value;
-    }
+        balances[msg.sender] += msg.value; 
+    } // @audit  Step 2: attack contract's execute function will call deposit() to send the flasholoaned money back to the contract, BUT to my attack contract 
 
     function withdraw() external {
         uint256 amountToWithdraw = balances[msg.sender];
         balances[msg.sender] = 0;
-        payable(msg.sender).sendValue(amountToWithdraw);
+        payable(msg.sender).sendValue(amountToWithdraw);  //@audit Step 3 / Sink: withdraw money to attack contact then attacker EOA
     }
 
     function flashLoan(uint256 amount) external {
-        uint256 balanceBefore = address(this).balance;
+        uint256 balanceBefore = address(this).balance; 
         if (balanceBefore < amount) revert NotEnoughETHInPool();
 
-        IFlashLoanEtherReceiver(msg.sender).execute{value: amount}();
+        IFlashLoanEtherReceiver(msg.sender).execute{value: amount}(); // @audit Source/ Step 1: Side entrance lenderPool will execute my attack contract's execute() funciton  
 
         if (address(this).balance < balanceBefore) {
             revert FlashLoanHasNotBeenPaidBack();

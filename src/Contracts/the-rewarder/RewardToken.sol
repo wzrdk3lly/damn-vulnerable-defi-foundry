@@ -18,7 +18,7 @@ contract RewardToken is ERC20, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
     }
-
+    // @note secure - only the minter can do this 
     function mint(address to, uint256 amount) external {
         if (!hasRole(MINTER_ROLE, msg.sender)) revert Forbidden();
         _mint(to, amount);

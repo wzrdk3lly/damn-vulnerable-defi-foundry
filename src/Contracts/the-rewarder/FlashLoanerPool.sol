@@ -22,7 +22,7 @@ contract FlashLoanerPool is ReentrancyGuard {
     constructor(address liquidityTokenAddress) {
         liquidityToken = DamnValuableToken(liquidityTokenAddress);
     }
-
+    // @note This flashLoan Pool offers free flashloans of DVT, I just need to create a contract that recieves a flashloan
     function flashLoan(uint256 amount) external nonReentrant {
         uint256 balanceBefore = liquidityToken.balanceOf(address(this));
         if (amount > balanceBefore) revert NotEnoughTokensInPool();

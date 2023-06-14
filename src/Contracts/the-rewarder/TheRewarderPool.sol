@@ -45,38 +45,38 @@ contract TheRewarderPool {
 
     /**
      * @notice sender must have approved `amountToDeposit` liquidity tokens in advance
-     */
+     */ // @note it appears anyone can deposit and the tokens don't get "locked" here...Flashloan in /out then receive rewards
     function deposit(uint256 amountToDeposit) external {
         if (amountToDeposit == 0) revert MustDepositTokens();
-
-        accToken.mint(msg.sender, amountToDeposit);
-        distributeRewards();
-
+        // @note credits the msg.sender accounting tokens 1:1 of DVT tokens
+        accToken.mint(msg.sender, amountToDeposit); //@audit anyone can deposit 
+        distributeRewards(); // @audit Source/Step 1 - call deposit() with flashloaned amount
+        //@note if the transferFrom returns false, then revert
         if (!liquidityToken.transferFrom(msg.sender, address(this), amountToDeposit)) revert TransferFail();
     }
-
+    //@audit-issue There is no limitations around withdrawals? I can flashloan dvt, deposit dvt here, withdraw dvt from here.
     function withdraw(uint256 amountToWithdraw) external {
-        accToken.burn(msg.sender, amountToWithdraw);
-        if (!liquidityToken.transfer(msg.sender, amountToWithdraw)) {
+        accToken.burn(msg.sender, amountToWithdraw); 
+        if (!liquidityToken.transfer(msg.sender, amountToWithdraw)) { //@audit sink / Step 2: withdraw doposited tokens 
             revert TransferFail();
         }
     }
-
+    // @note it appears every time someone deposits tokens within a round, they will receive a rewards. 
     function distributeRewards() public returns (uint256) {
         uint256 rewards = 0;
-
+        // @note if we are in the next round ( block.now >= (last timestamp + 5 days), record a snapshot 
         if (isNewRewardsRound()) {
-            _recordSnapshot();
+            _recordSnapshot();  // @audit I can use the logic, that the snapshot is recorded with data, but the actual amount of dvt the  rewarder pull has for me will be empty
         }
 
-        uint256 totalDeposits = accToken.totalSupplyAt(lastSnapshotIdForRewards);
-        uint256 amountDeposited = accToken.balanceOfAt(msg.sender, lastSnapshotIdForRewards);
+        uint256 totalDeposits =  accToken.totalSupplyAt(lastSnapshotIdForRewards); //@note grabs the total amount of deposits 
+        uint256 amountDeposited = accToken.balanceOfAt(msg.sender, lastSnapshotIdForRewards); // @note gets the balaance of amount deposits by msg.sender
 
         if (amountDeposited > 0 && totalDeposits > 0) {
             rewards = (amountDeposited * 100 * 10 ** 18) / totalDeposits;
-
+            // @note checks that they haven't retrived a reward for this round
             if (rewards > 0 && !_hasRetrievedReward(msg.sender)) {
-                rewardToken.mint(msg.sender, rewards);
+                rewardToken.mint(msg.sender, rewards); 
                 lastRewardTimestamps[msg.sender] = block.timestamp;
             }
         }
@@ -92,7 +92,7 @@ contract TheRewarderPool {
 
     function _hasRetrievedReward(address account) private view returns (bool) {
         return (
-            lastRewardTimestamps[account] >= lastRecordedSnapshotTimestamp
+            lastRewardTimestamps[account] >= lastRecordedSnapshotTimestamp // @note returns false if a user hasn't claimed a reward since the last snapshop
                 && lastRewardTimestamps[account] <= lastRecordedSnapshotTimestamp + REWARDS_ROUND_MIN_DURATION
         );
     }

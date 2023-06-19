@@ -4,4 +4,4 @@ My personal playground for [@Nicolas ](https://github.com/nicolasgarcia214) damn
 
 # Match specific test with 
 
-forge test --match-path [path/to/test/file]
+- forge test --match-path [path/to/test/file]

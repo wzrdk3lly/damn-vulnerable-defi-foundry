@@ -32,7 +32,7 @@ contract SimpleGovernance {
     error NotEnoughVotesToPropose();
     error CannotQueueActionsThatAffectGovernance();
     error CannotExecuteThisAction();
-
+    // @note how do we obtain governance token?
     constructor(address governanceTokenAddress) {
         if (governanceTokenAddress == address(0)) {
             revert GovernanceTokenCannotBeZeroAddress();
@@ -41,9 +41,9 @@ contract SimpleGovernance {
         governanceToken = DamnValuableTokenSnapshot(governanceTokenAddress);
         actionCounter = 1;
     }
-
+    // @note crete the input pramaters to make an action on the selfie Pool to drain it of the 1_000_000 tokens
     function queueAction(address receiver, bytes calldata data, uint256 weiAmount) external returns (uint256) {
-        if (!_hasEnoughVotes(msg.sender)) revert NotEnoughVotesToPropose();
+        if (!_hasEnoughVotes(msg.sender)) revert NotEnoughVotesToPropose(); //@note how do we get enough votes
         if (receiver == address(this)) {
             revert CannotQueueActionsThatAffectGovernance();
         }
@@ -61,7 +61,7 @@ contract SimpleGovernance {
         emit ActionQueued(actionId, msg.sender);
         return actionId;
     }
-
+  
     function executeAction(uint256 actionId) external payable {
         if (!_canBeExecuted(actionId)) revert CannotExecuteThisAction();
 
@@ -90,7 +90,7 @@ contract SimpleGovernance {
     }
 
     function _hasEnoughVotes(address account) private view returns (bool) {
-        uint256 balance = governanceToken.getBalanceAtLastSnapshot(account);
+        uint256 balance = governanceToken.getBalanceAtLastSnapshot(account); // @audit can I take a flashloan to have an extremely high balance of governance tokens ?
         uint256 halfTotalSupply = governanceToken.getTotalSupplyAtLastSnapshot() / 2;
         return balance > halfTotalSupply;
     }

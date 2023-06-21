@@ -22,17 +22,17 @@ contract SelfiePool is ReentrancyGuard {
     error NotEnoughTokensInPool();
     error BorrowerMustBeAContract();
     error FlashLoanHasNotBeenPaidBack();
-
+    //@note anything with this moddifier can only be called by the governance contract
     modifier onlyGovernance() {
         if (msg.sender != address(governance)) revert OnlyGovernanceAllowed();
         _;
     }
-
+    // @note the ERC20 snaphshot and SimpleGovernanace aren't intialized here  
     constructor(address tokenAddress, address governanceAddress) {
         token = ERC20Snapshot(tokenAddress);
         governance = SimpleGovernance(governanceAddress);
     }
-
+    // @note anyone can take a flashloan  so long as the sender is a contract. 
     function flashLoan(uint256 borrowAmount) external nonReentrant {
         uint256 balanceBefore = token.balanceOf(address(this));
         if (balanceBefore < borrowAmount) revert NotEnoughTokensInPool();
@@ -46,7 +46,7 @@ contract SelfiePool is ReentrancyGuard {
 
         if (balanceAfter < balanceBefore) revert FlashLoanHasNotBeenPaidBack();
     }
-
+    //@note in our attack contract we need to make a proxy call via the governanace contract to call the drain all funds function
     function drainAllFunds(address receiver) external onlyGovernance {
         uint256 amount = token.balanceOf(address(this));
         token.transfer(receiver, amount);

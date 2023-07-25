@@ -24,7 +24,7 @@ contract Compromised is Test {
         sources[0] = 0xA73209FB1a42495120166736362A1DfA9F95A105;
         sources[1] = 0xe92401A4d3af5E446d93D11EEc806b1462b39D15;
         sources[2] = 0x81A5D6E50C214044bE44cA0CB057fe119097850c;
-
+        // They could have used utils but did not in this case. it's done the same way.
         attacker = payable(address(uint160(uint256(keccak256(abi.encodePacked("attacker"))))));
         vm.deal(attacker, 0.1 ether);
         vm.label(attacker, "Attacker");

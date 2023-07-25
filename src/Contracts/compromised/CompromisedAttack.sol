@@ -3,8 +3,23 @@
 pragma solidity 0.8.19;
 
 contract CompromisedAttack{
+    address internal ExchangeAddress;
+    address internal owner;
+
+    error NotOWner();
+
+    modifier onlyOwner(){
+        if(msg.sender != owner) revert NotOWner();
+        _;
+    }
+    // constructor initializes exchange contract and ownr
+
+    // function to buyDiscount 
+
+    // function to sellProfit
 
 
+    // function to withdraw eth to onlyOwner
 
 }
 

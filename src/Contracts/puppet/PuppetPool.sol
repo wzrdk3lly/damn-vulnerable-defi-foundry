@@ -11,7 +11,7 @@ import {DamnValuableToken} from "../DamnValuableToken.sol";
  */
 contract PuppetPool is ReentrancyGuard {
     using Address for address payable;
-
+    // @audit check how deposits are stored and see if overwrites are possible?
     mapping(address => uint256) public deposits;
     address public immutable uniswapPair;
     DamnValuableToken public immutable token;
@@ -31,7 +31,7 @@ contract PuppetPool is ReentrancyGuard {
         uint256 depositRequired = calculateDepositRequired(borrowAmount);
 
         if (msg.value < depositRequired) revert NotDepositingEnoughCollateral();
-
+        //@audit-info - this is actually a good thing to see. Lacking over payemnt logic is a bug you may be able to find in the wild as a bounty hunter
         if (msg.value > depositRequired) {
             payable(msg.sender).sendValue(msg.value - depositRequired);
         }
@@ -45,14 +45,14 @@ contract PuppetPool is ReentrancyGuard {
     }
 
     function calculateDepositRequired(uint256 amount) public view returns (uint256) {
-        return (amount * _computeOraclePrice() * 2) / 10 ** 18;
+        return (amount * _computeOraclePrice() * 2) / 10 ** 18; // @audit - oracle is using direct balance of uniswap pair. This can be manipulated by sending money directly to the contract
     }
 
     function _computeOraclePrice() private view returns (uint256) {
         // calculates the price of the token in wei according to Uniswap pair
-        return (uniswapPair.balance * (10 ** 18)) / token.balanceOf(uniswapPair);
+        return (uniswapPair.balance * (10 ** 18)) / token.balanceOf(uniswapPair); //@audit - the higher this is the loswer the total oracle price will be. I calculated that If i deposit all 1000 of my tokens. I can borrow 49 tokens at a time Free of charge 
     }
-
+   
     /**
      * ... functions to deposit, redeem, repay, calculate interest, and so on ...
      */

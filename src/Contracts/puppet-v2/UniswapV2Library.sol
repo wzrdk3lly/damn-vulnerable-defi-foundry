@@ -44,7 +44,7 @@ library UniswapV2Library {
     function quote(uint256 amountA, uint256 reserveA, uint256 reserveB) internal pure returns (uint256 amountB) {
         require(amountA > 0, "UniswapV2Library: INSUFFICIENT_AMOUNT");
         require(reserveA > 0 && reserveB > 0, "UniswapV2Library: INSUFFICIENT_LIQUIDITY");
-        amountB = (amountA * reserveB) / reserveA;
+        amountB = (amountA * reserveB) / reserveA; // mabye we make the reserve of DVT highll  and amount of weth small to get the lowest amoun back out
     }
 
     // given an input amount of an asset and pair reserves, returns the maximum output amount of the other asset

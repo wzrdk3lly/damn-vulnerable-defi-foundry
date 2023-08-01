@@ -40,7 +40,8 @@ contract PuppetV2Pool {
      *         Sender must have approved enough WETH in advance.
      *         Calculations assume that WETH and borrowed token have same amount of decimals.
      */
-    function borrow(uint256 borrowAmount) external {
+    function borrow(uint256 borrowAmount) external { // @audit missing nonReentrant modifier
+        // checks that this contract has enough dvt to transfer 
         if (_token.balanceOf(address(this)) < borrowAmount) {
             revert NotEnoughTokenBalance();
         }

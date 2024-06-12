@@ -24,12 +24,12 @@ contract SelfiePool is ReentrancyGuard {
     error FlashLoanHasNotBeenPaidBack();
 
     modifier onlyGovernance() {
-        if (msg.sender != address(governance)) revert OnlyGovernanceAllowed();
+        if (msg.sender != address(governance)) revert OnlyGovernanceAllowed(); // @note EOA -> Attack contract -> governance -> SelfiPool?
         _;
     }
 
     constructor(address tokenAddress, address governanceAddress) {
-        token = ERC20Snapshot(tokenAddress);
+        token = ERC20Snapshot(tokenAddress); //@note Still a token but with Snapshot capabilities - has double spend vulnerabilities
         governance = SimpleGovernance(governanceAddress);
     }
 

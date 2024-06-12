@@ -68,7 +68,7 @@ contract SimpleGovernance {
         GovernanceAction storage actionToExecute = actions[actionId];
         actionToExecute.executedAt = block.timestamp;
 
-        actionToExecute.receiver.functionCallWithValue(actionToExecute.data, actionToExecute.weiAmount);
+        actionToExecute.receiver.functionCallWithValue(actionToExecute.data, actionToExecute.weiAmount); // @audit sink - execute the drain all funds function and maybe send the full wei amount of the 1mil dvt?
 
         emit ActionExecuted(actionId, msg.sender);
     }
